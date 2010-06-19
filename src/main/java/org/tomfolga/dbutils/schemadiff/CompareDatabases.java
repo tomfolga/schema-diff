@@ -1,6 +1,8 @@
 package org.tomfolga.dbutils.schemadiff;
 
 import static org.kohsuke.args4j.ExampleMode.ALL;
+
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
@@ -25,11 +27,14 @@ public class CompareDatabases {
 
 	private static final Log LOG = LogFactory.getLog(CompareDatabases.class);
 
-	private static final String CONFIG_FOLDER_ROOT = "config";
-
-	@Option(name = "-p", usage = "port number if starting web server")
+	@Option(name = "-p", usage = "port number if starting web server", required=true)
 	private int httpPort;
 	
+	@Option(name = "-c", usage = "folder name with config files")
+	private String configFolder = "config";
+
+	@Option(name = "-r", usage = "folder name with report files")
+	private String reportFolder = "report";
 
 	public static void main(String[] args) throws Exception {
 		new CompareDatabases().doMain(args);
@@ -49,21 +54,24 @@ public class CompareDatabases {
     		CompareDatabases cd = new CompareDatabases();
     		cd.initWebServer(reportGenerator);
         } catch( CmdLineException e ) {
-            LOG.error(e.getMessage());
-            LOG.error("java CompareDatabases [options...]");
+        	System.err.println(e.getMessage());
+            System.err.println("java CompareDatabases [options...]");
             parser.printUsage(System.err);
-            System.err.println("  Example: java CompareDatabases -p 8080 "+parser.printExample(ALL));
+            System.err.println();
+            System.err.println("  Example: java CompareDatabases "+parser.printExample(ALL));
         }
 	}
 	
-	private static void readProperties(Map<String, Properties> reportConfigs,
+	private void readProperties(Map<String, Properties> reportConfigs,
 			Map<String, IDataSource> dbs) throws IOException {
 		Properties dbProperties = new Properties();
-		dbProperties.load(CompareDatabases.class.getResourceAsStream("/"
-				+ CONFIG_FOLDER_ROOT + "/dbs.properties"));
+		String dbPropertiesFileName = configFolder+"/dbs.properties";
+		LOG.info("Loading database connection details from "+dbPropertiesFileName);
+		dbProperties.load(new FileInputStream(dbPropertiesFileName));
+		
 		Properties reportProperties = new Properties();
-		reportProperties.load(CompareDatabases.class.getResourceAsStream("/"
-				+ CONFIG_FOLDER_ROOT + "/reports.properties"));
+		String reportPropertiesFileName = configFolder+"/reports.properties";
+		reportProperties.load(new FileInputStream(reportPropertiesFileName));
 
 		parseReportsProperties(reportConfigs, reportProperties);
 
@@ -96,16 +104,16 @@ public class CompareDatabases {
 		}
 	}
 
-	private static void parseReportsProperties(
+	private void parseReportsProperties(
 			Map<String, Properties> reportConfigs, Properties reportProperties)
 			throws IOException {
 		for (Entry<Object, Object> entry : reportProperties.entrySet()) {
 			Properties reportConfig = new Properties();
-			String fileName = "/reports/" + (String) entry.getValue()
+			
+			String reportDefFileName = reportFolder+"/" + (String) entry.getValue()
 					+ ".properties";
-			System.out.println("loading " + fileName);
-			reportConfig.load(CompareDatabases.class
-					.getResourceAsStream(fileName));
+			LOG.info("Loading report definition from " + reportDefFileName);
+			reportConfig.load(new FileInputStream(reportDefFileName));
 			reportConfigs.put((String) entry.getValue(), reportConfig);
 		}
 	}
@@ -123,7 +131,7 @@ public class CompareDatabases {
 		final String warUrlString = warUrl.toExternalForm();
 		server.setHandler(new WebAppContext(warUrlString, CONTEXTPATH));
 
-		final Context context = new Context(server, "/servlets",
+		final Context context = new Context(server, "/",
 				Context.SESSIONS);
 		context.addServlet(new ServletHolder(new CompareDatabasesServlet(
 				reportGenerator)), "/compare");
