@@ -1,0 +1,60 @@
+/* Design 6 */
+
+body {
+    font-family: Verdana,Arial,sans-serif;
+}
+
+body,p,blockquote,li,th,td {
+    font-size: 8pt;
+}
+
+
+h1 { font-size: 1.4em; }
+h2 { font-size: 1.1em; margin-top: 2em; margin-bottom: 0.5em; }
+h3 { font-size: 1.0em; font-style: italic; font-weight: normal; margin-top: 2em; margin-bottom: 0.5em; }
+
+code {
+    font-size: 1.1em;
+}
+
+p,blockquote,pre,ul,ol,dl,table {
+    margin-top: 0px;
+    margin-bottom: 1em;
+}
+
+
+
+/* Design 6 */
+table.Design6 {
+    border-spacing: 0px;
+/*    border-collapse: collapse; */
+    background: #E9E9F3;
+    border: 0.5em solid #E9E9F3;
+}
+table.Design6 th {
+    text-align: left;
+    font-weight: bold;
+    padding: 0.1em 0.5em;
+    border: 0px;
+    border-bottom: 1px solid #9999AA;
+}
+table.Design6 td {
+    border: 0px;
+    border-bottom: 1px solid #9999AA;
+    border-left: 1px solid #9999AA;
+    padding: 0.1em 0.5em;
+}
+table.Design6 thead th {
+    text-align: center;
+    font-weight: bold;
+    color: #6C6C9A;
+    border-left: 1px solid #9999AA;
+}
+table.Design6 th.Corner {
+    text-align: left;
+    border-left: 0px;
+}
+table.Design6 tr.Odd {
+    background: #F6F4E4;
+}
+
