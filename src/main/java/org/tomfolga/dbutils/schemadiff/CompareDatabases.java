@@ -27,9 +27,9 @@ public class CompareDatabases {
 
 	private static final Log LOG = LogFactory.getLog(CompareDatabases.class);
 
-	@Option(name = "-p", usage = "port number if starting web server", required=true)
+	@Option(name = "-p", usage = "port number if starting web server", required = true)
 	private int httpPort;
-	
+
 	@Option(name = "-c", usage = "folder name with config files")
 	private String configFolder = "config";
 
@@ -41,36 +41,38 @@ public class CompareDatabases {
 	}
 
 	public void doMain(String[] args) throws Exception {
-        CmdLineParser parser = new CmdLineParser(this);
-        parser.setUsageWidth(80);
+		CmdLineParser parser = new CmdLineParser(this);
+		parser.setUsageWidth(80);
 
-        try {
-        	parser.parseArgument(args);
-    		Map<String, Properties> reportConfigs = new TreeMap<String, Properties>();
-    		Map<String, IDataSource> dbs = new TreeMap<String, IDataSource>();
-    		readProperties(reportConfigs, dbs);
-    		ReportGenerator reportGenerator = new ReportGenerator(dbs,
-    				reportConfigs);
-    		CompareDatabases cd = new CompareDatabases();
-    		cd.initWebServer(reportGenerator);
-        } catch( CmdLineException e ) {
-        	System.err.println(e.getMessage());
-            System.err.println("java CompareDatabases [options...]");
-            parser.printUsage(System.err);
-            System.err.println();
-            System.err.println("  Example: java CompareDatabases "+parser.printExample(ALL));
-        }
+		try {
+			parser.parseArgument(args);
+			Map<String, Properties> reportConfigs = new TreeMap<String, Properties>();
+			Map<String, IDataSource> dbs = new TreeMap<String, IDataSource>();
+			readProperties(reportConfigs, dbs);
+			ReportGenerator reportGenerator = new ReportGenerator(dbs,
+					reportConfigs);
+			CompareDatabases cd = new CompareDatabases();
+			cd.initWebServer(reportGenerator);
+		} catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			System.err.println("java CompareDatabases [options...]");
+			parser.printUsage(System.err);
+			System.err.println();
+			System.err.println("  Example: java CompareDatabases "
+					+ parser.printExample(ALL));
+		}
 	}
-	
+
 	private void readProperties(Map<String, Properties> reportConfigs,
 			Map<String, IDataSource> dbs) throws IOException {
 		Properties dbProperties = new Properties();
-		String dbPropertiesFileName = configFolder+"/dbs.properties";
-		LOG.info("Loading database connection details from "+dbPropertiesFileName);
+		String dbPropertiesFileName = configFolder + "/dbs.properties";
+		LOG.info("Loading database connection details from "
+				+ dbPropertiesFileName);
 		dbProperties.load(new FileInputStream(dbPropertiesFileName));
-		
+
 		Properties reportProperties = new Properties();
-		String reportPropertiesFileName = configFolder+"/reports.properties";
+		String reportPropertiesFileName = configFolder + "/reports.properties";
 		reportProperties.load(new FileInputStream(reportPropertiesFileName));
 
 		parseReportsProperties(reportConfigs, reportProperties);
@@ -104,14 +106,13 @@ public class CompareDatabases {
 		}
 	}
 
-	private void parseReportsProperties(
-			Map<String, Properties> reportConfigs, Properties reportProperties)
-			throws IOException {
+	private void parseReportsProperties(Map<String, Properties> reportConfigs,
+			Properties reportProperties) throws IOException {
 		for (Entry<Object, Object> entry : reportProperties.entrySet()) {
 			Properties reportConfig = new Properties();
-			
-			String reportDefFileName = reportFolder+"/" + (String) entry.getValue()
-					+ ".properties";
+
+			String reportDefFileName = reportFolder + "/"
+					+ (String) entry.getValue() + ".properties";
 			LOG.info("Loading report definition from " + reportDefFileName);
 			reportConfig.load(new FileInputStream(reportDefFileName));
 			reportConfigs.put((String) entry.getValue(), reportConfig);
@@ -131,8 +132,7 @@ public class CompareDatabases {
 		final String warUrlString = warUrl.toExternalForm();
 		server.setHandler(new WebAppContext(warUrlString, CONTEXTPATH));
 
-		final Context context = new Context(server, "/",
-				Context.SESSIONS);
+		final Context context = new Context(server, "/", Context.SESSIONS);
 		context.addServlet(new ServletHolder(new CompareDatabasesServlet(
 				reportGenerator)), "/compare");
 		server.start();
