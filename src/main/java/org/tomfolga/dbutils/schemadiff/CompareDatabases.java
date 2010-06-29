@@ -1,10 +1,8 @@
 package org.tomfolga.dbutils.schemadiff;
 
-import static org.kohsuke.args4j.ExampleMode.ALL;
-
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -14,9 +12,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.servlet.Context;
 import org.mortbay.jetty.servlet.ServletHolder;
@@ -25,116 +20,72 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public class CompareDatabases {
 
-	private static final Log LOG = LogFactory.getLog(CompareDatabases.class);
-
-	@Option(name = "-p", usage = "port number if starting web server", required = true)
-	private int httpPort;
-
-	@Option(name = "-c", usage = "folder name with config files")
-	private String configFolder = "config";
-
-	@Option(name = "-r", usage = "folder name with report files")
-	private String reportFolder = "report";
+	private static Log LOG = LogFactory.getLog(CompareDatabases.class);
 
 	public static void main(String[] args) throws Exception {
-		new CompareDatabases().doMain(args);
+		
+		Map<String, Properties> reportConfigs = new TreeMap<String, Properties>();
+		Map<String, IDataSource> dbs = new TreeMap<String, IDataSource>();	
+		readProperties(reportConfigs, dbs);
+		ReportGenerator reportGenerator = new ReportGenerator(dbs, reportConfigs);
+		CompareDatabases cd = new CompareDatabases();
+		cd.initWebServer(reportGenerator);
 	}
 
-	public void doMain(String[] args) throws Exception {
-		CmdLineParser parser = new CmdLineParser(this);
-		parser.setUsageWidth(80);
-
-		try {
-			parser.parseArgument(args);
-			Map<String, Properties> reportConfigs = new TreeMap<String, Properties>();
-			Map<String, IDataSource> dbs = new TreeMap<String, IDataSource>();
-			readProperties(reportConfigs, dbs);
-			ReportGenerator reportGenerator = new ReportGenerator(dbs,
-					reportConfigs);
-			CompareDatabases cd = new CompareDatabases();
-			cd.initWebServer(reportGenerator);
-		} catch (CmdLineException e) {
-			System.err.println(e.getMessage());
-			System.err.println("java CompareDatabases [options...]");
-			parser.printUsage(System.err);
-			System.err.println();
-			System.err.println("  Example: java CompareDatabases "
-					+ parser.printExample(ALL));
-		}
-	}
-
-	private void readProperties(Map<String, Properties> reportConfigs,
-			Map<String, IDataSource> dbs) throws IOException {
+	private static void readProperties(Map<String, Properties> reportConfigs, Map<String, IDataSource> dbs)
+			throws IOException {
 		Properties dbProperties = new Properties();
-		String dbPropertiesFileName = configFolder + "/dbs.properties";
-		LOG.info("Loading database connection details from "
-				+ dbPropertiesFileName);
-		dbProperties.load(new FileInputStream(dbPropertiesFileName));
-
+		dbProperties.load(CompareDatabases.class.getResourceAsStream("/dbs.properties"));
 		Properties reportProperties = new Properties();
-		String reportPropertiesFileName = configFolder + "/reports.properties";
-		reportProperties.load(new FileInputStream(reportPropertiesFileName));
+		reportProperties.load(CompareDatabases.class.getResourceAsStream("/reports.properties"));
 
-		parseReportsProperties(reportConfigs, reportProperties);
-
-		parseDatabaseProperties(dbs, dbProperties);
-	}
-
-	private static void parseDatabaseProperties(Map<String, IDataSource> dbs,
-			Properties dbProperties) {
-		for (Entry<Object, Object> propertyNameValue : dbProperties.entrySet()) {
-			String propertyName = (String) propertyNameValue.getKey();
-			String dbName = propertyName.split("\\.")[0];
-			DataSource dataSource = new SingleConnectionDataSource(dbProperties
-					.getProperty(dbName + ".url"), dbProperties
-					.getProperty(dbName + ".username"), dbProperties
-					.getProperty(dbName + ".password"), false);
-			dbs.put(dbName, new DataSourceWithProperties(dataSource, dbName,
-					dbProperties.getProperty(dbName + ".url")));
+		for (Entry<Object, Object> entry : reportProperties.entrySet()) {
+			Properties reportConfig = new Properties();
+			String fileName = "/reports/" + (String) entry.getValue() + ".properties";
+			System.out.println("loading " + fileName);
+			reportConfig.load(CompareDatabases.class.getResourceAsStream(fileName));
+			reportConfigs.put((String) entry.getValue(), reportConfig);
 		}
 
-		for (Entry<Object, Object> propertyNameValue : dbProperties.entrySet()) {
-			String key = (String) propertyNameValue.getKey();
+		
+		for (Entry<Object, Object> entry : dbProperties.entrySet()) {
+			String key = (String) entry.getKey();
+			String dbName = key.split("\\.")[0];
+			DataSource dataSource = new SingleConnectionDataSource("oracle.jdbc.driver.OracleDriver", dbProperties
+					.getProperty(dbName + ".url"), dbProperties.getProperty(dbName + ".username"), dbProperties
+					.getProperty(dbName + ".password"), false);
+			dbs.put(dbName, new DataSourceWithProperties(dataSource, dbName,dbProperties
+					.getProperty(dbName + ".url") ));
+		}
+		
+		
+		for (Entry<Object, Object> entry : dbProperties.entrySet()) {
+			String key = (String) entry.getKey();
 			if (key.contains(".variable.")) {
 				String dbName = key.split("\\.")[0];
 				String variableName = key.split("\\.")[2];
-				String variableValue = (String) propertyNameValue.getValue();
+				String variableValue = (String) entry.getValue();
 				IDataSource dataSource = dbs.get(dbName);
-				dataSource.getVariableSubstitutionProperties().setProperty(
-						variableName, variableValue);
-			}
-		}
-	}
-
-	private void parseReportsProperties(Map<String, Properties> reportConfigs,
-			Properties reportProperties) throws IOException {
-		for (Entry<Object, Object> entry : reportProperties.entrySet()) {
-			Properties reportConfig = new Properties();
-
-			String reportDefFileName = reportFolder + "/"
-					+ (String) entry.getValue() + ".properties";
-			LOG.info("Loading report definition from " + reportDefFileName);
-			reportConfig.load(new FileInputStream(reportDefFileName));
-			reportConfigs.put((String) entry.getValue(), reportConfig);
+				dataSource.getVariableSubstitutionProperties().setProperty(variableName, variableValue);
+			}			
 		}
 	}
 
 	public void initWebServer(ReportGenerator reportGenerator) throws Exception {
 		final String WEBAPPDIR = "webapp";
 
-		final Server server = new Server(httpPort);
+		final Server server = new Server(8080);
 		final String CONTEXTPATH = "/webapp";
 
 		// for localhost:port/admin/index.html and whatever else is in the
 		// webapp directory
-		final URL warUrl = this.getClass().getClassLoader().getResource(
-				WEBAPPDIR);
+		final URL warUrl = this.getClass().getClassLoader().getResource(WEBAPPDIR);
 		final String warUrlString = warUrl.toExternalForm();
 		server.setHandler(new WebAppContext(warUrlString, CONTEXTPATH));
 
-		final Context context = new Context(server, "/", Context.SESSIONS);
-		context.addServlet(new ServletHolder(new CompareDatabasesServlet(
-				reportGenerator)), "/compare");
+		// for localhost:port/servlets/cust, etc.
+		final Context context = new Context(server, "/servlets", Context.SESSIONS);
+		context.addServlet(new ServletHolder(new CompareDatabasesServlet(reportGenerator)), "/compare");
 		server.start();
 
 	}
