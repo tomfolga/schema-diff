@@ -20,8 +20,11 @@ import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 
 public class CompareDatabases {
 
+	private static final String CONFIG = "/config/";
 	private static Log LOG = LogFactory.getLog(CompareDatabases.class);
 
+	
+	
 	public static void main(String[] args) throws Exception {
 		
 		Map<String, Properties> reportConfigs = new TreeMap<String, Properties>();
@@ -41,8 +44,8 @@ public class CompareDatabases {
 
 		for (Entry<Object, Object> entry : reportProperties.entrySet()) {
 			Properties reportConfig = new Properties();
-			String fileName = "/reports/" + (String) entry.getValue() + ".properties";
-			System.out.println("loading " + fileName);
+			String fileName = CONFIG + (String) entry.getValue() + ".properties";
+			LOG.info("loading " + fileName);
 			reportConfig.load(CompareDatabases.class.getResourceAsStream(fileName));
 			reportConfigs.put((String) entry.getValue(), reportConfig);
 		}
