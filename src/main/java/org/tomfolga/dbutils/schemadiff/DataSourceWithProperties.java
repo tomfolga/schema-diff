@@ -12,12 +12,18 @@ public class DataSourceWithProperties implements IDataSource {
 	private final String name;
 
 	private final String connectionString;
+
+	private final String username;
+
+	private final String password;
 	
-	public DataSourceWithProperties(DataSource dataSource, String name, String connectionString) {
+	public DataSourceWithProperties(DataSource dataSource, String name, String connectionString, String username, String password) {
 		super();
 		this.dataSource = dataSource;
 		this.name = name;
 		this.connectionString = connectionString;
+		this.username = username;
+		this.password = password;
 		variableSubstitutionProperties = new Properties();
 	}
 
@@ -40,6 +46,18 @@ public class DataSourceWithProperties implements IDataSource {
 
 	public String getConnectionString() {
 		return connectionString;
+	}
+
+
+	@Override
+	public String getUsername() {
+		return username;
+	}
+
+
+	@Override
+	public String getPassword() {
+		return password;
 	}
 
 

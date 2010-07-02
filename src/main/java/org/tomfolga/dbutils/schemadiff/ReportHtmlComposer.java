@@ -42,6 +42,33 @@ public class ReportHtmlComposer implements IReportComposer {
 		pw.append("</td>\n");
 		pw.append("</tr>\n");
 		pw.append("<tr>\n");
+
+		pw.append("<tr>\n");
+		pw.append("<td>\n");
+		pw.append("Username");
+		pw.append("</td>\n");
+		pw.append("<td>\n");
+		pw.append(dataSource1.getUsername());
+		pw.append("</td>\n");
+		pw.append("<td>\n");
+		pw.append(dataSource2.getUsername());
+		pw.append("</td>\n");
+		pw.append("</tr>\n");
+		pw.append("<tr>\n");
+
+		pw.append("<tr>\n");
+		pw.append("<td>\n");
+		pw.append("Password");
+		pw.append("</td>\n");
+		pw.append("<td>\n");
+		pw.append(dataSource1.getPassword());
+		pw.append("</td>\n");
+		pw.append("<td>\n");
+		pw.append(dataSource2.getPassword());
+		pw.append("</td>\n");
+		pw.append("</tr>\n");
+		pw.append("<tr>\n");
+		
 		pw.append("<td>\n");
 		pw.append("Properties");
 		pw.append("</td>\n");

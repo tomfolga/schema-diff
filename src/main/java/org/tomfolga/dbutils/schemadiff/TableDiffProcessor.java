@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.tomfolga.dbutils.schemadiff.RowDiff.DiffType;
 
 public class TableDiffProcessor {
@@ -40,13 +41,7 @@ public class TableDiffProcessor {
 	}
 
 	private TableData loadReportingErrors(ITableDao tableDao) {
-		try {
-			return tableDao.loadTableData(keyColumnNames, nonKeyColumnNames, sql);
-		} catch (DataAccessException e) {
-			throw new DataAccessException("Error in database" + tableDao.getDbName(), e) {
-			};
-		}
-
+		return tableDao.loadTableData(keyColumnNames, nonKeyColumnNames, sql);
 	}
 
 	public TableDiff diff() throws DataAccessException {

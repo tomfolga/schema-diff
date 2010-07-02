@@ -10,4 +10,6 @@ public interface IDataSource {
 	Properties getVariableSubstitutionProperties();
 	String getName();
 	String getConnectionString();
+	String getUsername();
+	String getPassword();
 }

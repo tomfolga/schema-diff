@@ -11,6 +11,7 @@ public class VariableSubstitutor {
 			String variableName = (String) variable.getKey();
 			String variableValue = (String) variable.getValue();
 			modifiedString = modifiedString.replace("${"+variableName+"}", variableValue);
+			modifiedString = modifiedString.replace("${"+variableName.toUpperCase()+"}", variableValue.toUpperCase());
 		}
 		return modifiedString;
 		

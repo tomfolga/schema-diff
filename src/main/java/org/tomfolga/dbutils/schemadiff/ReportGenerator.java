@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.CannotGetJdbcConnectionException;
 
 public class ReportGenerator implements IReportGenerator {
 
@@ -35,6 +36,9 @@ public class ReportGenerator implements IReportGenerator {
 			tdp.loadTables();
 			TableDiff tableDiff = tdp.diff();			
 			reportComposer.composerReport(report, tableDiff);
+			} catch (CannotGetJdbcConnectionException e ){
+				reportComposer.composerErrorReport(report, e);
+				break;
 			} catch (DataAccessException e) {
 				reportComposer.composerErrorReport(report, e);
 			}

@@ -84,11 +84,12 @@ public class CompareDatabases {
 			String key = (String) entry.getKey();
 			String dbName = key.split("\\.")[0];
 			BasicDataSource dataSource = new BasicDataSource();
+			dataSource.setDriverClassName("oracle.jdbc.driver.OracleDriver");
 			dataSource.setUrl(dbProperties.getProperty(dbName + ".url"));
 			dataSource.setUsername(dbProperties.getProperty(dbName + ".username"));
 			dataSource.setPassword(dbProperties.getProperty(dbName + ".password"));
 			dbs.put(dbName, new DataSourceWithProperties(dataSource, dbName,dbProperties
-					.getProperty(dbName + ".url") ));
+					.getProperty(dbName + ".url"), dataSource.getUsername(), dataSource.getPassword() ));
 		}
 		
 		
@@ -101,7 +102,7 @@ public class CompareDatabases {
 				IDataSource dataSource = dbs.get(dbName);
 				dataSource.getVariableSubstitutionProperties().setProperty(variableName, variableValue);
 			}			
-		}
+		}		 
 	}
 
 	private static Properties loadPropertyFile(String dbConfigPath,String fileName) throws IOException, FileNotFoundException {
